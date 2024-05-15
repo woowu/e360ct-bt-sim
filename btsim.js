@@ -69,22 +69,23 @@ function listenDev(dev, dataCb, commandCb)
     };
     const sChksum = c => {
         clearTimeout(timer);
-        if (c != cs)
-            console.log(`bad checksum: ${c} vs ${cs}`);
-        else
+        if (c != cs) {
+            console.log(`bad checksum: ${c} vs ${cs}. command ${command.code}, info len ${command.info.length}`);
+            console.log(dump(command.info));
+        } else
             commandCb(command);
         state = sData;
     };
     const sInfo = c => {
         command.info.push(c);
-        cs = 255 ^ c;
+        cs ^= c;
         if (! --len) state = sChksum;
     };
     const sLength = c => {
         if (c & 1 != 1)
             throw new Error(`bad length ${c}`);
         len = c >> 1;
-        cs = 255 ^ c;
+        cs ^= c;
         state = c ? sInfo : sChksum;
     }
     const sCommand = c => {
