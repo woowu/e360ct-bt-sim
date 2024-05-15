@@ -114,6 +114,8 @@ function listenDev(dev, dataCb, commandCb)
 
     state = sData;
     dev.on('data', data => {
+        console.log('<');
+        console.log(dump(data));
         for (const c of data) state(c);
     });
 }
@@ -175,16 +177,14 @@ function useData()
         if (timer) clearTimeout(timer);
         buf.push(c);
         timer = setTimeout(() => {
-            console.log('D <', dump(buf));
             buf = [];
-        }, 25);
+        }, 50);
     };
 }
 
 function printCommand(cmd)
 {
-    console.log(`C < code ${cmd.code}`);
-    if (cmd.info.length) console.log(dump(cmd.info));
+    console.log(`Command: code ${cmd.code} len ${cmd.info.length} + 3`);
 }
 
 function useCommand(cb)
