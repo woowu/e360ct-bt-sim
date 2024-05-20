@@ -31,11 +31,23 @@ const dataSamples = {
 };
 
 const commandSamples = {
-    'stack-up': Buffer.from([
-        0x03, 0x01,
+    'unknown': Buffer.from([
+        0xb, 0x01,
     ]),
-    'bad-code': Buffer.from([
-        0x02, 0x01,
+    'invalid-code': Buffer.from([
+        0x2, 0x01,
+    ]),
+    'invalid-len': Buffer.from([
+        0xb, 0x2,
+    ]),
+    'setup': Buffer.from([
+        0x5, 0x1,
+    ]),
+    'ready': Buffer.from([
+        0x7, 0x1,
+    ]),
+    'status': Buffer.from([
+        0x9, 0x1,
     ]),
 };
 
@@ -86,7 +98,7 @@ function listenDev(dev, dataCb, commandCb)
             throw new Error(`bad length ${c}`);
         len = c >> 1;
         cs ^= c;
-        state = c ? sInfo : sChksum;
+        state = len ? sInfo : sChksum;
     }
     const sCommand = c => {
         if (c & 1 != 1)
@@ -202,7 +214,15 @@ function mkSetupCommand()
     buf.push(0); // len
     buf.push(0x81, 0x00, 0x11, 0x22, 0x33, 0xff, 0xee); // Bluetooth address
     buf.push(0x82, 1, 0, 1); // Firmware version
-    buf[1] = (buf.length - 2) << 1;
+    buf[1] = (buf.length - 2) << 1 | 1;
+    return Buffer.from(buf);
+}
+
+function mkReadyCommand()
+{
+    const buf = [];
+    buf.push(3 << 1 | 1);
+    buf.push(1);
     return Buffer.from(buf);
 }
 
@@ -271,7 +291,9 @@ const argv = yargs(process.argv.slice(2))
             listenDev(dev, useData(), printCommand);
             if (argv.sample) {
                 sendSampleCommand(dev, argv.sample, argv.badChksum);
-                return;
+                setTimeout(() => {
+                    process.exit(0);
+                }, 5000);
             }
         })
     .command('setup',
@@ -282,9 +304,10 @@ const argv = yargs(process.argv.slice(2))
             const dev = await openDev(argv.device, argv.baud);
             listenDev(dev, useData(), useCommand(cmd => {
                 setTimeout(() => {
-                    sendCommand(dev, mkSetupCommand());
+                    sendCommand(dev, mkReadyCommand());
                 }, 25);
             }));
+            sendCommand(dev, mkSetupCommand());
         })
     .help()
     .argv;
