@@ -47,7 +47,7 @@ const commandSamples = {
         0x7, 0x1,
     ]),
     'status': Buffer.from([
-        0x9, 0x1,
+        0x9, 0x1, 0x85, 0xc4,
     ]),
 };
 
@@ -196,7 +196,7 @@ function useData()
 
 function printCommand(cmd)
 {
-    console.log(`Command: code ${cmd.code} len ${cmd.info.length} + 3`);
+    console.log(`Command: code ${cmd.code} len ${cmd.info.length + 3}`);
 }
 
 function useCommand(cb)
@@ -207,13 +207,24 @@ function useCommand(cb)
     }
 }
 
-function mkSetupCommand()
+function mkSetupCommand(localName)
 {
+    const LOCAL_NAME_MAX = 32;
+    const defaultLocalName = 'CC2340R5';
     const buf = [];
+    var ln;
+
     buf.push(2 << 1 | 1);
     buf.push(0); // len
     buf.push(0x81, 0x00, 0x11, 0x22, 0x33, 0xff, 0xee); // Bluetooth address
     buf.push(0x82, 1, 0, 1); // Firmware version
+    buf.push(0x83);
+    ln = ! localName ? defaultLocalName : localName;
+    ln = ln.slice(0, LOCAL_NAME_MAX);
+    for (var i = 0; i < ln.length; ++i) {
+        buf.push(ln.charCodeAt(i));
+    }
+    if (ln.length < LOCAL_NAME_MAX) buf.push(0);
     buf[1] = (buf.length - 2) << 1 | 1;
     return Buffer.from(buf);
 }
@@ -299,6 +310,12 @@ const argv = yargs(process.argv.slice(2))
     .command('setup',
         'setup',
         yargs => {
+            yargs
+                .option('n', {
+                    alias: 'local-name',
+                    type: 'string',
+                    describe: 'BLE local name',
+                })
         },
         async (argv) => {
             const dev = await openDev(argv.device, argv.baud);
@@ -307,7 +324,7 @@ const argv = yargs(process.argv.slice(2))
                     sendCommand(dev, mkReadyCommand());
                 }, 25);
             }));
-            sendCommand(dev, mkSetupCommand());
+            sendCommand(dev, mkSetupCommand(argv.localName));
         })
     .help()
     .argv;
