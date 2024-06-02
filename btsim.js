@@ -250,7 +250,7 @@ const argv = yargs(process.argv.slice(2))
     .option('b', {
         alias: 'baud',
         type: 'number',
-        default: 115200,
+        default: 921600,
     })
     .command('send-data',
         'send data',
