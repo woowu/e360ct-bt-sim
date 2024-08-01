@@ -6,11 +6,14 @@ const dump = require('buffer-hexdump');
 const yargs = require('yargs/yargs');
 
 const dataSamples = {
-    'd1': Buffer.from([
+    'sendn' : Buffer.from(
+        'SENDn 10\n'
+    ),
+    'd2': Buffer.from([
         0x01, 0x02, 0x03, 0x04,
         0xff, 0xfe, 0xfd, 0xfc,
     ]),
-    'd2': Buffer.from([
+    'd3': Buffer.from([
         0x01, 0x02, 0x03, 0x04,
         0x05, 0x06, 0x07, 0x08,
         0x09, 0x0a, 0x0b, 0x0c,
